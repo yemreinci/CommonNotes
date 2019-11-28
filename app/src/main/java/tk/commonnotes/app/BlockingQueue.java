@@ -1,4 +1,4 @@
-package tk.commonnotes;
+package tk.commonnotes.app;
 
 import java.util.LinkedList;
 

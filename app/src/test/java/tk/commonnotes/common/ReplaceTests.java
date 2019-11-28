@@ -1,4 +1,4 @@
-package tk.commonnotes.ot;
+package tk.commonnotes.common;
 
 import org.junit.Test;
 
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 public class ReplaceTests {
     @Test
     public void testApply() {
-        Operation op = new Replace(3, 7, "foo");
+        Replace op = new Replace(3, 7, "foo");
 
         StringBuilder str = new StringBuilder("barbarbar");
 
@@ -24,7 +24,7 @@ public class ReplaceTests {
 
     @Test
     public void testSerialize() throws Exception {
-        Operation op = new Replace(3, 7, "foo");
+        Replace op = new Replace(3, 7, "foo");
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream objectOut = new ObjectOutputStream(out);
@@ -36,7 +36,7 @@ public class ReplaceTests {
         ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
         ObjectInputStream objectIn = new ObjectInputStream(in);
 
-        Operation op2 = (Operation )objectIn.readObject();
+        Replace op2 = (Replace) objectIn.readObject();
 
         assertEquals(op, op2);
     }
@@ -50,12 +50,9 @@ public class ReplaceTests {
 
     @Test
     public void testTransform() {
-
         Random rand = new Random(1337);
 
-
         for (int i = 0; i < 5000; i++) {
-            //System.out.println("testcase: " + i);
             int len = rand.nextInt(10);
 
             String s = "";
@@ -82,8 +79,8 @@ public class ReplaceTests {
             StringBuilder s1 = new StringBuilder(s);
             StringBuilder s2 = new StringBuilder(s);
 
-            Replace r1p = (Replace )r1.transform(r2, true);
-            Replace r2p = (Replace) r2.transform(r1, false);
+            Replace r1p = r1.transform(r2, true);
+            Replace r2p = r2.transform(r1, false);
 
 //            System.out.println(r1p);
 //            System.out.println(r2p);

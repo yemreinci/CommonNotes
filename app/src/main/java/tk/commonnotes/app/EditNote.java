@@ -1,7 +1,6 @@
-package tk.commonnotes;
+package tk.commonnotes.app;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.LiveData;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -12,9 +11,7 @@ import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 
@@ -23,12 +20,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 
-import tk.commonnotes.ot.Operation;
-import tk.commonnotes.ot.Replace;
-import tk.commonnotes.ot.Message;
+import tk.commonnotes.R;
+import tk.commonnotes.common.Replace;
+import tk.commonnotes.common.message.Message;
 
 //                        if (reader.ready()) {
 //                            command = reader.readLine().replace("<br>", "\n");
@@ -90,8 +86,10 @@ public class EditNote extends AppCompatActivity {
     private Handler handler = new Handler();
     private BlockingQueue<Message> messages;
     private boolean disable = false;
-    private ArrayList<Operation> operations;
+    private ArrayList<Replace> operations;
     private int numExecuted = 0;
+    private ArrayList<Replace> outgoing = new ArrayList<Replace>();
+    private int noteId;
 
     private void focusOnEditText() {
         if(findViewById(R.id.editText).requestFocus()) {
@@ -103,12 +101,15 @@ public class EditNote extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_note);
-        focusOnEditText();
+
+        noteId = (int) getIntent().getExtras().get("noteId");
 
         messages = new BlockingQueue<Message>();
 
         text = findViewById(R.id.editText);
-        operations = new ArrayList<Operation>();
+        operations = new ArrayList<Replace>();
+
+        text.setEnabled(false);
 
         text.addTextChangedListener(new TextWatcher() {
             @Override
@@ -125,7 +126,7 @@ public class EditNote extends AppCompatActivity {
                     return;
                 }
 
-                Operation operation = new Replace(start, start+before, s.subSequence(start, start+count).toString());
+                Replace operation = new Replace(start, start+before, s.subSequence(start, start+count).toString());
                 operations.add(operation);
 
                 messages.add(new Message(operation, numExecuted));
@@ -147,11 +148,16 @@ public class EditNote extends AppCompatActivity {
                     Socket sock = new Socket("52.174.25.75", 8001);
                     Log.d("tcpsocket", "socket opened");
 
+                    HashMap<String, Object> request = new HashMap<>();
+                    request.put("type", "connectNote");
+                    request.put("noteId", noteId);
+
                     final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
 
-                    Runnable sender = new Runnable() {
-                        int cursor = 0;
+                    out.writeObject(request);
+                    out.flush();
 
+                    Runnable sender = new Runnable() {
                         @Override
                         public void run() {
                             while (true) {
@@ -160,6 +166,7 @@ public class EditNote extends AppCompatActivity {
                                 try {
                                     out.writeObject(message);
                                     out.flush();
+                                    outgoing.add(message.getOperation());
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -171,12 +178,27 @@ public class EditNote extends AppCompatActivity {
 
                     ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
 
+                    final String initialText = (String) in.readObject();
+                    Log.d("yunus", "initial text: " + initialText);
+
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            disable = true;
+                            text.append(initialText);
+                            disable = false;
+                            text.setEnabled(true);
+                            focusOnEditText();
+                        }
+                    });
+
                     while (true) {
                         final Message message = (Message) in.readObject();
                         Log.d("receive", "msg pri: " + message.hasPriority());
 
                         if (message == null) {
-                            continue;
+                            System.out.println("E - unexpected null message");
+                            break;
                         }
 
                         handler.post(new Runnable() {
@@ -197,6 +219,19 @@ public class EditNote extends AppCompatActivity {
                                 text.getText().replace(transformed.bi, transformed.ei, transformed.str);
                                 numExecuted++;
                                 disable = false;
+
+                                final BackgroundColorSpan span = new BackgroundColorSpan(Color.YELLOW);
+//
+                                text.getText().setSpan(span,
+                                        transformed.bi, transformed.bi+transformed.str.length(),
+                                        Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                                handler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        text.getText().removeSpan(span);
+                                    }
+                                }, 500);
                             }
                         });
                     }

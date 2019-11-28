@@ -1,40 +1,63 @@
 package tk.commonnotes;
 
-import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Random;
 
-import tk.commonnotes.ot.Message;
-import tk.commonnotes.ot.Replace;
-import tk.commonnotes.ot.Operation;
+import tk.commonnotes.common.message.Message;
+import tk.commonnotes.common.Replace;
 
 public class MockClient {
     static int numExecuted = 0;
     static StringBuilder text = new StringBuilder();
     static Object lock = new Object();
 
-    public static void main(String[] args) throws Exception {
-        ServerSocket serverSock = new ServerSocket(8080, 10);
-
-        Socket sock = serverSock.accept();
-
-        System.out.println("client connected");
+    public static int newNote() throws Exception {
+        Socket sock = new Socket("localhost", 8080);
 
         final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
         final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
-        final ArrayList<Operation> operations = new ArrayList<Operation>();
+
+        HashMap<String, Object> request = new HashMap<>();
+
+        request.put("type", "newNote");
+
+        out.writeObject(request);
+        out.flush();
+
+        HashMap<String, Object> response = (HashMap<String, Object>) in.readObject();
+
+        int noteId = (int) response.get("noteId");
+
+        in.close();
+        out.close();
+        sock.close();
+
+        return noteId;
+    }
+
+    public static void main(String[] args) throws Exception {
+//        Socket sock = new Socket("52.174.25.75", 8001);
+//        final int noteId = newNote();
+        final int noteId = 0;
+        Socket sock = new Socket("localhost", 8080);
+
+        final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
+        final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
+        final ArrayList<Replace> operations = new ArrayList<Replace>();
         final Random r = new Random(1337);
 
-        Runnable receiver = new Runnable() {
+        final Runnable receiver = new Runnable() {
             @Override
             public void run() {
                 try {
+                    String initialText = (String) in.readObject();
+                    text.append(initialText);
+                    System.out.println("initial text: " + text);
+
                     while (true) {
                         Message message = (Message) in.readObject();
 
@@ -76,10 +99,16 @@ public class MockClient {
             @Override
             public void run() {
                 try {
+                    HashMap<String, Object> request = new HashMap<>();
+                    request.put("type", "connectNote");
+                    request.put("noteId", noteId);
 
-                    for (int j = 0; j < 30; j++) {
-                        for (int i = 0; i < 100; i++) {
-                            String[] choices = {"", "a", "b", "aa", "bb", "c", "dc", "e"};
+                    out.writeObject(request);
+                    out.flush();
+
+                    for (int j = 0; j < 20; j++) {
+                        for (int i = 0; i < 50; i++) {
+                            String[] choices = {"", "a", "b", "aa", "bb", "c", "dc", "e", "asd"};
 
                             Replace operation;
                             Message message;
@@ -104,10 +133,10 @@ public class MockClient {
                             out.writeObject(message);
                             out.flush();
 
-                            Thread.sleep(r.nextInt(5));
+                            Thread.sleep(2500);
                         }
                         out.flush();
-                        Thread.sleep(r.nextInt(500));
+                        Thread.sleep(2000);
                     }
                     Thread.sleep(2000);
                     System.out.println("last: " + text);

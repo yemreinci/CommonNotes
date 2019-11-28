@@ -1,17 +1,10 @@
-package tk.commonnotes.ot;
+package tk.commonnotes.common.message;
 
-import androidx.annotation.NonNull;
+import tk.commonnotes.common.Replace;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.io.IOException;
+public final class Message extends AbstractMessage {
 
-public class Message implements Serializable {
-
-    private Operation operation;
+    private Replace operation;
     private boolean priority;
 
     /**
@@ -19,17 +12,17 @@ public class Message implements Serializable {
      */
     private int numExecuted;
 
-    public Message(Operation operation, int numExecuted) {
+    public Message(Replace operation, int numExecuted) {
         this.operation = operation;
         this.numExecuted = numExecuted;
     }
 
-    public Message(Operation operation, int numExecuted, boolean priority) {
+    public Message(Replace operation, int numExecuted, boolean priority) {
         this(operation, numExecuted);
         this.priority = priority;
     }
 
-    public Operation getOperation() {
+    public Replace getOperation() {
         return operation;
     }
 
