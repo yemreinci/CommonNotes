@@ -7,7 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import tk.commonnotes.common.message.Message;
+import tk.commonnotes.ot.message.Message;
 
 import static org.junit.Assert.assertEquals;
 

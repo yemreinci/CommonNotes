@@ -56,7 +56,7 @@ public class NotesList extends AppCompatActivity {
                 @Override
                 public void run() {
                     try {
-                        Socket sock = new Socket("52.174.25.75", 8001);
+                        Socket sock = new Socket(Config.serverAddress, Config.serverPort);
 
                         final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
                         final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
@@ -103,7 +103,7 @@ public class NotesList extends AppCompatActivity {
             @Override
             public void run() {
                 try {
-                    Socket sock = new Socket("52.174.25.75", 8001);
+                    Socket sock = new Socket(Config.serverAddress, Config.serverPort);
 
                     final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
                     final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());

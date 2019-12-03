@@ -20,13 +20,13 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
 import tk.commonnotes.R;
-import tk.commonnotes.common.Replace;
-import tk.commonnotes.common.message.Message;
+import tk.commonnotes.ot.Message;
+import tk.commonnotes.ot.Replace;
+import tk.commonnotes.app.Config;
 
 public class EditNote extends AppCompatActivity {
     private EditText text;
@@ -144,7 +144,7 @@ public class EditNote extends AppCompatActivity {
                 try {
                     Log.d("tcpsocket", "running");
 
-                    Socket sock = new Socket("52.174.25.75", 8001);
+                    Socket sock = new Socket(Config.serverAddress, Config.serverPort);
                     Log.d("tcpsocket", "socket opened");
 
                     HashMap<String, Object> request = new HashMap<>();

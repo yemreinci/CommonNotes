@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import tk.commonnotes.common.Replace;
+import tk.commonnotes.ot.Replace;
 
 public class Manager implements Runnable {
     private int noteId;

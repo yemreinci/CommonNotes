@@ -1,6 +1,4 @@
-package tk.commonnotes.common;
-
-import androidx.annotation.NonNull;
+package tk.commonnotes.ot;
 
 import java.io.Serializable;
 import java.util.Locale;
@@ -41,7 +39,6 @@ public class Replace implements Serializable {
     }
 
     @Override
-    @NonNull
     public String toString() {
         return String.format(Locale.ENGLISH, "replace(%d, %d, '%s')", bi, ei, str);
     }
@@ -102,5 +99,4 @@ public class Replace implements Serializable {
             return new Replace(oth.ei+d, ei+d, str);
         }
     }
-
 }

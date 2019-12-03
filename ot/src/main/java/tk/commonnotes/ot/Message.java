@@ -1,8 +1,8 @@
-package tk.commonnotes.common.message;
+package tk.commonnotes.ot;
 
-import tk.commonnotes.common.Replace;
+import java.io.Serializable;
 
-public final class Message extends AbstractMessage {
+public final class Message implements Serializable {
 
     private Replace operation;
     private boolean priority;

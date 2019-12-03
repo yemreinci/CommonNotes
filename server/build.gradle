@@ -1,7 +1,13 @@
 apply plugin: 'java-library'
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation project(path: ':ot')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'tk.commonnotes.server.Main'
+    }
 }
 
 sourceCompatibility = "7"

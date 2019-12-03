@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
-import tk.commonnotes.Main2Activity;
 import tk.commonnotes.R;
 
 public class MainActivity extends AppCompatActivity {

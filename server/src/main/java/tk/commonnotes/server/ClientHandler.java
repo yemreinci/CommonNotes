@@ -6,8 +6,8 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-import tk.commonnotes.common.message.Message;
-import tk.commonnotes.common.Replace;
+import tk.commonnotes.ot.Message;
+import tk.commonnotes.ot.Replace;
 
 public class ClientHandler implements Runnable {
     private ObjectInputStream objectInputStream;

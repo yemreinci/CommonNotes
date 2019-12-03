@@ -7,8 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
-import tk.commonnotes.common.message.Message;
-import tk.commonnotes.common.Replace;
+import tk.commonnotes.ot.Message;
+import tk.commonnotes.ot.Replace;
 
 public class MockClient {
     static int numExecuted = 0;

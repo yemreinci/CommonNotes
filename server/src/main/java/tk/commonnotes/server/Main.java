@@ -1,9 +1,30 @@
 package tk.commonnotes.server;
 
+import java.io.IOException;
+
 public class Main {
 	public static void main(String[] args) {
-		Server server = new Server();
-		
+		int port = 8000;
+
+		if (args.length > 0) {
+			try {
+				port = Integer.parseInt(args[0]);
+			} catch (NumberFormatException e) {
+				System.err.println("Port should be an integer");
+				return;
+			}
+		}
+
+		Server server = null;
+
+		try {
+			server = new Server(port);
+		} catch (IOException e) {
+			System.err.print("E - failed to bind server");
+			e.printStackTrace();
+			return;
+		}
+
 		server.start();
 	}
 }

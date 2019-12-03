@@ -6,7 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.*;
 import java.util.*;
 
-import tk.commonnotes.common.message.Message;
+import tk.commonnotes.ot.Message;
 
 public class Server {
 	private ServerSocket serverSocket;
@@ -15,15 +15,11 @@ public class Server {
 	private int noteIdCount = 0, cliendIdCount = 0;
 	private HashMap<Integer, Manager> managers;
 
-	public Server() {
+	public Server(int port) throws IOException {
+		serverSocket = new ServerSocket(port, 20);
 		managers = new HashMap<>();
 
-		try {
-			serverSocket = new ServerSocket(8080, 10);
-		} catch (IOException e) {
-			System.out.println("E - error when binding server socket");
-			e.printStackTrace();
-		}
+		System.out.println("I - listening connections on " + port);
 	}
 
 	public void handleNewClient(Socket sock) {
