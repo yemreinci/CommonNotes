@@ -106,8 +106,8 @@ public class MockClient {
                     out.writeObject(request);
                     out.flush();
 
-                    for (int j = 0; j < 20; j++) {
-                        for (int i = 0; i < 50; i++) {
+                    for (int j = 0; j < 0; j++) {
+                        for (int i = 0; i < 0; i++) {
                             String[] choices = {"", "a", "b", "aa", "bb", "c", "dc", "e", "asd"};
 
                             Replace operation;
@@ -133,7 +133,7 @@ public class MockClient {
                             out.writeObject(message);
                             out.flush();
 
-                            Thread.sleep(2500);
+                            Thread.sleep(200);
                         }
                         out.flush();
                         Thread.sleep(2000);

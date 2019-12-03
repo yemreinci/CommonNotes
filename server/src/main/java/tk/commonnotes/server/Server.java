@@ -47,7 +47,10 @@ public class Server {
 			if ("newNote".equals(request.get("type"))) {
 				HashMap<String, Object> response = new HashMap<>();
 
-				managers.put(noteIdCount, new Manager(noteIdCount));
+				Manager manager = new Manager(noteIdCount);
+				(new Thread(manager)).start();
+
+				managers.put(noteIdCount, manager);
 				response.put("noteId", noteIdCount);
 
 				System.out.println("I - new note created: " + noteIdCount);

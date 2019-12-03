@@ -9,6 +9,7 @@
     android:id="@+id/topLayout">
 
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="10dp"
@@ -26,9 +27,9 @@
             android:id="@+id/editText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
             android:gravity="start|top"
             android:inputType="textMultiLine"
-            android:background="@android:color/transparent"
             tools:layout_editor_absoluteX="9dp"
             tools:layout_editor_absoluteY="150dp" />
     </ScrollView>

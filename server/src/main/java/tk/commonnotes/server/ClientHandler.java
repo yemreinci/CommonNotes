@@ -1,11 +1,10 @@
 package tk.commonnotes.server;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 import tk.commonnotes.common.message.Message;
 import tk.commonnotes.common.Replace;
@@ -15,7 +14,8 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream objectOutputStream;
     private int id;
     private final Manager manager;
-    private ArrayList<Replace> outgoing;
+    private LinkedList<Replace> outgoing;
+    private int numAcknowledged = 0;
     private int numExecuted = 0;
     private boolean dead = false;
 
@@ -29,7 +29,7 @@ public class ClientHandler implements Runnable {
         this.manager = manager;
         this.objectInputStream = objectInputStream;
         this.objectOutputStream = objectOutputStream;
-        this.outgoing = new ArrayList<Replace>();
+        this.outgoing = new LinkedList<Replace>();
     }
 
     private void sendCurrentText() throws IOException {
@@ -59,12 +59,19 @@ public class ClientHandler implements Runnable {
                 Replace op = message.getOperation();
 
                 synchronized (manager) {
-                    for (int i = message.getNumExecuted(); i < outgoing.size(); i++) {
-                        Replace t1 = op.transform(outgoing.get(i), false);
-                        Replace t2 = outgoing.get(i).transform(op, true);
+                    while (numAcknowledged < message.getNumExecuted()) {
+                        outgoing.removeFirst();
+                        numAcknowledged++;
+                    }
+
+                    for (ListIterator<Replace> iter = outgoing.listIterator(); iter.hasNext(); ) {
+                        Replace qOp = iter.next();
+
+                        Replace t1 = op.transform(qOp, false);
+                        Replace t2 = qOp.transform(op, true);
 
                         op = t1;
-                        outgoing.set(i, t2);
+                        iter.set(t2);
                     }
 
                     numExecuted++;
@@ -79,12 +86,18 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void sendOperation(Replace op) throws IOException {
+    public void sendOperation(Replace op) {
         if (!isDead()) {
-            Message msg = new Message(op, numExecuted);
+            try {
+                Message msg = new Message(op, numExecuted);
 
-            outgoing.add(op);
-            objectOutputStream.writeObject(msg);
+                outgoing.add(op);
+                objectOutputStream.writeObject(msg);
+            } catch (IOException e) {
+                e.printStackTrace();
+                dead = true;
+                System.out.println("E - client " + id + " is dead.");
+            }
         }
     }
 

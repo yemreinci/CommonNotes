@@ -4,15 +4,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.Layout;
-import android.util.Log;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,13 +22,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 
-import tk.commonnotes.Main2Activity;
 import tk.commonnotes.R;
-
 
 public class NotesList extends AppCompatActivity {
 
@@ -101,7 +97,6 @@ public class NotesList extends AppCompatActivity {
     }
 
     private void loadNotes() {
-
         Thread job = new Thread() {
             List<HashMap<String, Object>> notes = null;
 
@@ -134,7 +129,7 @@ public class NotesList extends AppCompatActivity {
                             View v = LayoutInflater.from(NotesList.this).inflate(R.layout.note_card, layout, false);
 
                             final Integer noteId = (int) note.get("noteId");
-                            final String text = (String) note.get("text");
+                            String text = (String) note.get("text");
 
                             v.setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -146,11 +141,23 @@ public class NotesList extends AppCompatActivity {
                                 }
                             });
 
-                            TextView summaryText = v.findViewById(R.id.summaryText);
-                            summaryText.setText(text);
+                            text = text.trim();
 
-                            TextView title = v.findViewById(R.id.titleText);
-                            title.setText(noteId.toString());
+                            int lineBreak = text.indexOf("\n");
+                            if (lineBreak == -1) {
+                                lineBreak = text.length();
+                            }
+
+                            TextView textView = v.findViewById(R.id.text);
+
+                            Spannable spannableText = new SpannableString(text);
+                            spannableText.setSpan(
+                                    new RelativeSizeSpan(1.5f),
+                                    0,
+                                    lineBreak,
+                                    Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+                            textView.setText(spannableText);
 
                             layout.addView(v);
                         }

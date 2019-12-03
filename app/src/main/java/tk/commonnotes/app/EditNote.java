@@ -2,17 +2,16 @@ package tk.commonnotes.app;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Intent;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
 import android.util.Log;
-import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import java.io.IOException;
@@ -21,79 +20,43 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 import tk.commonnotes.R;
 import tk.commonnotes.common.Replace;
 import tk.commonnotes.common.message.Message;
 
-//                        if (reader.ready()) {
-//                            command = reader.readLine().replace("<br>", "\n");
-//
-//                            String[] splitted = command.split(" ", 3);
-//                            final int from = Integer.parseInt(splitted[0]);
-//                            final int to = Integer.parseInt(splitted[1]);
-//                            final String with = splitted.length < 3 ? "": splitted[2];
-//
-//                            handler.post(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    int start = text.getSelectionStart();
-//                                    int end = text.getSelectionEnd();
-//
-//                                    disable = true;
-//                                    text.getText().replace(from, to, with);
-//                                    disable = false;
-//
-//                                    if (to <= start) {
-//                                        int d = with.length() - (to - from);
-//                                        text.setSelection(start + d, end + d);
-//                                    } else if (end <= from) {
-//                                        text.setSelection(start, end);
-//                                    }
-//
-//                                    final BackgroundColorSpan span = new BackgroundColorSpan(Color.YELLOW);
-//
-//                                    text.getText().setSpan(span,
-//                                            from, from + with.length(),
-//                                            Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
-//
-//                                    handler.postDelayed(new Runnable() {
-//                                        @Override
-//                                        public void run() {
-//                                            text.getText().removeSpan(span);
-//                                        }
-//                                    }, 800);
-//
-//                                }
-//                            });
-//                        }
-//String now = s.subSequence(start, start + count).toString();
-//
-//
-//        if (lastAdded.equals("*") && now.equals(" ") &&
-//        s.subSequence(start-1, start+1).toString().equals("* ")) {
-//        text.getText().replace(start-1, start+1, "• ");
-//        inList = true;
-//        }
-//        else if (now.equals("\n") && inList) {
-//        text.getText().insert(start+1,"• ");
-//        }
-//
-//        lastAdded = now;
-
 public class EditNote extends AppCompatActivity {
     private EditText text;
     private Handler handler = new Handler();
     private BlockingQueue<Message> messages;
-    private boolean disable = false;
-    private ArrayList<Replace> operations;
+    private boolean disableWatcher = false;
+    private LinkedList<Replace> operations;
+    private int numAcknowledged = 0;
     private int numExecuted = 0;
     private ArrayList<Replace> outgoing = new ArrayList<Replace>();
     private int noteId;
+    private HashMap<Character, Character> charToBullet, bulletToChar;
 
     private void focusOnEditText() {
+        // focus on edit and open keyboard
         if(findViewById(R.id.editText).requestFocus()) {
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        }
+    }
+
+    private void initializeBulletTables() {
+        charToBullet = new HashMap<>();
+        bulletToChar = new HashMap<>();
+
+        charToBullet.put('*', '•');
+        charToBullet.put('-', '◦');
+
+        for(HashMap.Entry<Character, Character> entry: charToBullet.entrySet()) {
+            bulletToChar.put(entry.getValue(), entry.getKey());
         }
     }
 
@@ -102,26 +65,26 @@ public class EditNote extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_note);
 
+        initializeBulletTables();
+
         noteId = (int) getIntent().getExtras().get("noteId");
 
         messages = new BlockingQueue<Message>();
 
         text = findViewById(R.id.editText);
-        operations = new ArrayList<Replace>();
+        operations = new LinkedList<>();
 
         text.setEnabled(false);
 
         text.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                Log.d("beforetextchange", String.format("%s %d %d %d", s, start, count, after));
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 Log.d("ontextchange", String.format("%s %d %d %d", s, start, before, count) + " " + s.subSequence(start, start+count).toString());
 
-                if (disable) {
+                if (disableWatcher) {
                     Log.d("ontextchange", "disabled");
                     return;
                 }
@@ -130,14 +93,50 @@ public class EditNote extends AppCompatActivity {
                 operations.add(operation);
 
                 messages.add(new Message(operation, numExecuted));
+
+                if (count == 1 && s.charAt(start) == ' ') {
+                    if (start > 0 && charToBullet.containsKey(s.charAt(start-1))) {
+                        boolean allBlank = true;
+                        for (int i = start-2; i >= 0 && s.charAt(i) != '\n'; i--) {
+                            if (s.charAt(i) != ' ') {
+                                allBlank = false;
+                            }
+                        }
+
+                        if (allBlank) {
+                            String bullet = charToBullet.get(s.charAt(start-1)).toString();
+                            text.getText().replace(start-1, start, bullet);
+                        }
+                    }
+                }
+                else if (count == 1 && s.charAt(start) == '\n') {
+                    boolean bulletSeen = false;
+                    char bullet = 0;
+                    StringBuilder indent = new StringBuilder();
+                    for (int i = start-1; i >= 0 && s.charAt(i) != '\n'; i--) {
+                        if (bulletToChar.containsKey(s.charAt(i))) {
+                            bullet = s.charAt(i);
+                            indent.setLength(0);
+                        }
+                        else if (bullet != 0) {
+                            if (s.charAt(i) == ' ') {
+                                indent.append(' ');
+                            }
+                            else {
+                                bullet = 0;
+                            }
+                        }
+                    }
+
+                    if (bullet != 0) {
+                        text.getText().insert(start+1, indent.toString() + bullet + " ");
+                    }
+                }
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-                Log.d("aftertextchange", s.toString());
-            }
+            public void afterTextChanged(Editable s) { }
         });
-
 
         Runnable network = new Runnable() {
             @Override
@@ -184,9 +183,9 @@ public class EditNote extends AppCompatActivity {
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            disable = true;
+                            disableWatcher = true;
                             text.append(initialText);
-                            disable = false;
+                            disableWatcher = false;
                             text.setEnabled(true);
                             focusOnEditText();
                         }
@@ -206,22 +205,30 @@ public class EditNote extends AppCompatActivity {
                             public void run() {
                                 Log.d("receive", "received: " + message.getOperation());
                                 Replace transformed = (Replace) message.getOperation();
-                                for (int i = message.getNumExecuted(); i < operations.size(); i++) {
-                                    Replace t1 = (Replace) transformed.transform(operations.get(i), true);
-                                    Replace t2 = (Replace) operations.get(i).transform(transformed, false);
+
+                                while (numAcknowledged < message.getNumExecuted()) {
+                                    operations.removeFirst();
+                                    numAcknowledged++;
+                                }
+
+                                for (ListIterator<Replace> iter = operations.listIterator(); iter.hasNext(); ) {
+                                    Replace op = iter.next();
+
+                                    Replace t1 = (Replace) transformed.transform(op, true);
+                                    Replace t2 = (Replace) op.transform(transformed, false);
 
                                     transformed = t1;
-                                    operations.set(i, t2);
+                                    iter.set(t2);
                                 }
 
                                 Log.d("receive", "executing: " + transformed);
-                                disable = true;
+                                disableWatcher = true;
                                 text.getText().replace(transformed.bi, transformed.ei, transformed.str);
                                 numExecuted++;
-                                disable = false;
+                                disableWatcher = false;
 
-                                final BackgroundColorSpan span = new BackgroundColorSpan(Color.YELLOW);
-//
+                                final BackgroundColorSpan span = new BackgroundColorSpan(Color.rgb(212, 232, 255));
+
                                 text.getText().setSpan(span,
                                         transformed.bi, transformed.bi+transformed.str.length(),
                                         Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
