@@ -48,6 +48,11 @@ public class Server {
 			return;
 		}
 
+		// handle the request coming from the client
+		// newNote: client creates a new note
+		// connectNote: client subscribes to an existing note
+		// listNotes: client gets a list of existing notes
+
 		try {
 			HashMap<String, Object> request = (HashMap<String, Object>) in.readObject();
 
@@ -75,6 +80,9 @@ public class Server {
 			else if ("connectNote".equals(request.get("type"))) {
 				int noteId = (int) request.get("noteId");
 				Manager manager = managers.get(noteId);
+
+				// create a handler for the client and start
+
 				ClientHandler clientHandler = new ClientHandler(cliendIdCount, manager, in, out);
 
 				System.out.println("I - client " + cliendIdCount + " connected to note " + noteId);
@@ -141,7 +149,6 @@ public class Server {
 				handleNewClient(clientSock);
 			}
 		}
-	
 	}
 
 }

@@ -44,9 +44,12 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
+            // register for the note and send the current state of the text
             synchronized (manager) {
+                System.out.println("D - sending current text to " + id);
                 manager.register(this);
                 sendCurrentText();
+                System.out.println("D - done sending to " + id);
             }
 
             while (true) {
@@ -59,11 +62,15 @@ public class ClientHandler implements Runnable {
                 Replace op = message.getOperation();
 
                 synchronized (manager) {
+                    System.out.println("D - handling op from " + id);
+
+                    // Remove acknowledged messages
                     while (numAcknowledged < message.getNumExecuted()) {
                         outgoing.removeFirst();
                         numAcknowledged++;
                     }
 
+                    // Transform concurrent operations
                     for (ListIterator<Replace> iter = outgoing.listIterator(); iter.hasNext(); ) {
                         Replace qOp = iter.next();
 
@@ -75,7 +82,11 @@ public class ClientHandler implements Runnable {
                     }
 
                     numExecuted++;
+
+                    // Send operation to every client
                     manager.broadcastOperation(id, op);
+
+                    System.out.println("D - done handling op from " + id);
                 }
 
             }
@@ -87,6 +98,7 @@ public class ClientHandler implements Runnable {
     }
 
     private void die() {
+        // Gracefully exit
         if (!isDead()) {
             System.out.println("I - client " + id + " is dying.");
             try {

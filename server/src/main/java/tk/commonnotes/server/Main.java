@@ -4,8 +4,9 @@ import java.io.IOException;
 
 public class Main {
 	public static void main(String[] args) {
-		int port = 8000;
+		int port = 8000; // default port
 
+		// parse port argument
 		if (args.length > 0) {
 			try {
 				port = Integer.parseInt(args[0]);
@@ -25,6 +26,7 @@ public class Main {
 			return;
 		}
 
+		// start server for accepting connections
 		server.start();
 	}
 }

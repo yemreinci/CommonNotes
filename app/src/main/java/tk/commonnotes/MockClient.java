@@ -110,9 +110,9 @@ public class MockClient {
                     out.writeObject(request);
                     out.flush();
 
-                    for (int j = 0; j < 0; j++) {
-                        for (int i = 0; i < 0; i++) {
-                            String[] choices = {"", "a", "b", "aa", "bb", "c", "dc", "e", "asd"};
+                    for (int j = 0; j < 50; j++) {
+                        for (int i = 0; i < 10; i++) {
+                            String[] choices = {"", "a", "b", "aa", "bb\n", "c", "dc", "e", "asd", "\n"};
 
                             Replace operation;
                             Message message;

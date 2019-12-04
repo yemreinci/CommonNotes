@@ -2,6 +2,9 @@ package tk.commonnotes.app;
 
 import java.util.LinkedList;
 
+/**
+ * Thread-safe blocking queue implementation
+ */
 public class BlockingQueue<T> {
     public LinkedList<T> elements;
 
