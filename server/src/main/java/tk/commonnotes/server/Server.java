@@ -7,7 +7,6 @@ import java.net.*;
 import java.util.*;
 
 import tk.commonnotes.ot.Message;
-import tk.commonnotes.ot.Replace;
 
 public class Server {
 	private ServerSocket serverSocket;
@@ -128,13 +127,11 @@ public class Server {
 			e.printStackTrace();
 			System.out.println("I - trying to close the client socket");
 			closeSocket(sock);
-			return;
 		} catch (ClassNotFoundException e) {
 			System.out.println("E - unexpected error happened.");
 			e.printStackTrace();
 			System.out.println("I - trying to close the client socket");
 			closeSocket(sock);
-			return;
 		}
 	}
 	

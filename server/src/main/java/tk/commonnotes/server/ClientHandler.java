@@ -7,14 +7,16 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 import tk.commonnotes.ot.Message;
-import tk.commonnotes.ot.Replace;
+import tk.commonnotes.ot.operation.DeleteNote;
+import tk.commonnotes.ot.operation.Operation;
+import tk.commonnotes.ot.operation.Replace;
 
 public class ClientHandler implements Runnable {
     private ObjectInputStream objectInputStream;
     private ObjectOutputStream objectOutputStream;
     private int id;
     private final Manager manager;
-    private LinkedList<Replace> outgoing;
+    private LinkedList<Replace> sentReplaces;
     private int numAcknowledged = 0;
     private int numExecuted = 0;
     private boolean dead = false;
@@ -29,7 +31,7 @@ public class ClientHandler implements Runnable {
         this.manager = manager;
         this.objectInputStream = objectInputStream;
         this.objectOutputStream = objectOutputStream;
-        this.outgoing = new LinkedList<Replace>();
+        this.sentReplaces = new LinkedList<Replace>();
     }
 
     private void sendCurrentText() throws IOException {
@@ -51,7 +53,7 @@ public class ClientHandler implements Runnable {
                 sendCurrentText();
 
                 if (manager.isDeleted()) { // note is already deleted
-                    sendOperation(new Replace(true));
+                    sendOperation(new DeleteNote());
                     die();
                 }
             }
@@ -63,32 +65,41 @@ public class ClientHandler implements Runnable {
                     throw new NullPointerException();
                 }
 
-                Replace op = message.getOperation();
+                Operation operation = message.getOperation();
 
                 synchronized (manager) {
                     System.out.println("D - handling op from " + id);
 
-                    // Remove acknowledged messages
-                    while (numAcknowledged < message.getNumExecuted()) {
-                        outgoing.removeFirst();
-                        numAcknowledged++;
+                    if (operation.getType().equals("delete-note")) {
+                        manager.setDeleted();
                     }
+                    else if (operation.getType().equals("replace")) {
+                        Replace receivedOp = (Replace) operation;
 
-                    // Transform concurrent operations
-                    for (ListIterator<Replace> iter = outgoing.listIterator(); iter.hasNext(); ) {
-                        Replace qOp = iter.next();
+                        receivedOp.apply(manager.getText());
 
-                        Replace t1 = op.transform(qOp, false);
-                        Replace t2 = qOp.transform(op, true);
+                        // Remove acknowledged messages
+                        while (numAcknowledged < message.getNumExecuted()) {
+                            sentReplaces.removeFirst();
+                            numAcknowledged++;
+                        }
 
-                        op = t1;
-                        iter.set(t2);
+                        // Transform concurrent operations
+                        for (ListIterator<Replace> iter = sentReplaces.listIterator(); iter.hasNext(); ) {
+                            Replace sentOp = (Replace) iter.next();
+
+                            Replace t1 = receivedOp.transform(sentOp, false);
+                            Replace t2 = sentOp.transform(receivedOp, true);
+
+                            receivedOp = t1;
+                            iter.set(t2); // sentOp
+                        }
+
+                        numExecuted++;
                     }
-
-                    numExecuted++;
 
                     // Send operation to every client
-                    manager.broadcastOperation(id, op);
+                    manager.broadcastOperation(id, operation);
 
                     System.out.println("D - done handling op from " + id);
                 }
@@ -118,12 +129,15 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public void sendOperation(Replace op) {
+    public void sendOperation(Operation operation) {
         if (!isDead()) {
             try {
-                Message msg = new Message(op, numExecuted);
+                Message msg = new Message(operation, numExecuted);
 
-                outgoing.add(op);
+                if (operation.getType().equals("replace")) {
+                    sentReplaces.add((Replace) operation);
+                }
+
                 objectOutputStream.writeObject(msg);
             } catch (IOException e) {
                 e.printStackTrace();

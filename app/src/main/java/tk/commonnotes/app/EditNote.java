@@ -27,7 +27,9 @@ import java.util.ListIterator;
 
 import tk.commonnotes.R;
 import tk.commonnotes.ot.Message;
-import tk.commonnotes.ot.Replace;
+import tk.commonnotes.ot.operation.DeleteNote;
+import tk.commonnotes.ot.operation.Operation;
+import tk.commonnotes.ot.operation.Replace;
 
 
 public class EditNote extends AppCompatActivity {
@@ -122,7 +124,9 @@ public class EditNote extends AppCompatActivity {
             public void run() {
                 Log.d("receive", "received: " + message.getOperation());
 
-                if(message.getOperation().delete) {
+                Operation operation = message.getOperation();
+
+                if (operation.getType().equals("delete-note")) {
                     handleDelete();
                     return;
                 }
@@ -133,7 +137,7 @@ public class EditNote extends AppCompatActivity {
                     numAcknowledged++;
                 }
 
-                Replace transformed = (Replace) message.getOperation();
+                Replace transformed = (Replace) operation;
                 // transform concurrent operations
                 for (ListIterator<Replace> iter = operations.listIterator(); iter.hasNext(); ) {
                     Replace op = iter.next();
@@ -235,7 +239,7 @@ public class EditNote extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     switch (which){
                         case DialogInterface.BUTTON_POSITIVE:
-                            messages.add(new Message(new Replace(true), numExecuted));
+                            messages.add(new Message(new DeleteNote(), numExecuted));
                             break;
 
                         case DialogInterface.BUTTON_NEGATIVE:

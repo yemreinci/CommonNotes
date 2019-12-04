@@ -2,27 +2,24 @@ package tk.commonnotes.ot;
 
 import java.io.Serializable;
 
+import tk.commonnotes.ot.operation.Operation;
+
+
 public final class Message implements Serializable {
 
-    private Replace operation;
-    private boolean priority;
+    private Operation operation;
 
     /**
-     * Number of executed requested from the server
+     * Number of executed messages
      */
     private int numExecuted;
 
-    public Message(Replace operation, int numExecuted) {
+    public Message(Operation operation, int numExecuted) {
         this.operation = operation;
         this.numExecuted = numExecuted;
     }
 
-    public Message(Replace operation, int numExecuted, boolean priority) {
-        this(operation, numExecuted);
-        this.priority = priority;
-    }
-
-    public Replace getOperation() {
+    public Operation getOperation() {
         return operation;
     }
 
@@ -33,9 +30,5 @@ public final class Message implements Serializable {
     @Override
     public String toString() {
         return String.format("Message(%d, %s)", numExecuted, operation.toString());
-    }
-
-    public boolean hasPriority() {
-        return priority;
     }
 }

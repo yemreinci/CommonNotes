@@ -54,7 +54,7 @@ public class EditNoteBackground {
                                     e.printStackTrace();
                                 }
 
-                                if (message.getOperation().delete) {
+                                if (message.getOperation().getType().equals("delete-note")) {
                                     activity.exit();
                                 }
                             }
@@ -78,8 +78,6 @@ public class EditNoteBackground {
                             System.out.println("E - unexpected null message");
                             break;
                         }
-
-                        Log.d("receive", "msg pri: " + message.hasPriority());
 
                         activity.handleMessage(message);
                     }

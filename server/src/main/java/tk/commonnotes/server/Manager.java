@@ -4,7 +4,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import tk.commonnotes.ot.Replace;
+import tk.commonnotes.ot.operation.Operation;
+import tk.commonnotes.ot.operation.Replace;
 
 
 /**
@@ -28,6 +29,10 @@ public class Manager implements Runnable {
         return isDeleted;
     }
 
+    public void setDeleted() {
+        isDeleted = true;
+    }
+
     /**
      * Register clientHandler for broadcast operations
      */
@@ -38,14 +43,7 @@ public class Manager implements Runnable {
     /**
      * Send operation from fromClientId to every other client
      */
-    public void broadcastOperation(int fromClientId, Replace operation) {
-        if (operation.delete) {
-            isDeleted = true;
-        }
-        else {
-            operation.apply(text);
-        }
-
+    public void broadcastOperation(int fromClientId, Operation operation) {
         for (Iterator<ClientHandler> iterator = clientHandlers.iterator(); iterator.hasNext(); ) {
             ClientHandler clientHandler = iterator.next();
 

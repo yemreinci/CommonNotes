@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import tk.commonnotes.ot.Message;
-import tk.commonnotes.ot.Replace;
+import tk.commonnotes.ot.operation.Replace;
 
 public class MockClient {
     static int numExecuted = 0;

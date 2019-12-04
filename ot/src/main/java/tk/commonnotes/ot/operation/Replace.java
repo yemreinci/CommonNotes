@@ -1,10 +1,11 @@
-package tk.commonnotes.ot;
+package tk.commonnotes.ot.operation;
 
 import java.io.Serializable;
 import java.util.Locale;
 
 
-public class Replace implements Serializable {
+public class Replace extends Operation {
+    private String type = "replace";
     /**
      * Begin index of substring to be replaced
      */
@@ -20,30 +21,23 @@ public class Replace implements Serializable {
      */
     public String str;
 
-
-    /**
-     * Delete the note
-     */
-    public boolean delete;
-
     /**
      * Return NOOP Replace
      */
     public Replace() {
         this.bi = this.ei = 0;
         this.str = "";
-        this.delete = false;
     }
 
     public Replace(int bi, int ei, String str) {
         this.bi = bi;
         this.ei = ei;
         this.str = str;
-        this.delete = false;
     }
 
-    public Replace(boolean delete) {
-        this.delete = delete;
+    @Override
+    public String getType() {
+        return "replace";
     }
 
     public void apply(StringBuilder text) {
