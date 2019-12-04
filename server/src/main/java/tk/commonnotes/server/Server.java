@@ -7,6 +7,7 @@ import java.net.*;
 import java.util.*;
 
 import tk.commonnotes.ot.Message;
+import tk.commonnotes.ot.Replace;
 
 public class Server {
 	private ServerSocket serverSocket;
@@ -82,7 +83,6 @@ public class Server {
 				Manager manager = managers.get(noteId);
 
 				// create a handler for the client and start
-
 				ClientHandler clientHandler = new ClientHandler(cliendIdCount, manager, in, out);
 
 				System.out.println("I - client " + cliendIdCount + " connected to note " + noteId);
@@ -99,6 +99,10 @@ public class Server {
 				for (HashMap.Entry<Integer, Manager> item: managers.entrySet()) {
 					int noteId = item.getKey();
 					Manager manager = item.getValue();
+
+					if (manager.isDeleted()) {
+						continue;
+					}
 
 					HashMap<String, Object> note = new HashMap<>();
 

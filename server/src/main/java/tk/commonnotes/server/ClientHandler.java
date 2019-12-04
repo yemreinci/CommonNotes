@@ -46,10 +46,14 @@ public class ClientHandler implements Runnable {
         try {
             // register for the note and send the current state of the text
             synchronized (manager) {
-                System.out.println("D - sending current text to " + id);
                 manager.register(this);
+
                 sendCurrentText();
-                System.out.println("D - done sending to " + id);
+
+                if (manager.isDeleted()) { // note is already deleted
+                    sendOperation(new Replace(true));
+                    die();
+                }
             }
 
             while (true) {

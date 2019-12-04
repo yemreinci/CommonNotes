@@ -53,6 +53,10 @@ public class EditNoteBackground {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+
+                                if (message.getOperation().delete) {
+                                    activity.exit();
+                                }
                             }
                         }
                     };
@@ -69,12 +73,13 @@ public class EditNoteBackground {
                     // receive loop
                     while (true) {
                         final Message message = (Message) in.readObject();
-                        Log.d("receive", "msg pri: " + message.hasPriority());
 
                         if (message == null) {
                             System.out.println("E - unexpected null message");
                             break;
                         }
+
+                        Log.d("receive", "msg pri: " + message.hasPriority());
 
                         activity.handleMessage(message);
                     }

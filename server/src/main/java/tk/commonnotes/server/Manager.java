@@ -13,6 +13,7 @@ import tk.commonnotes.ot.Replace;
 public class Manager implements Runnable {
     private int noteId;
     private List<ClientHandler> clientHandlers;
+    private boolean isDeleted;
 
     private StringBuilder text;
 
@@ -20,6 +21,11 @@ public class Manager implements Runnable {
         clientHandlers = new LinkedList<ClientHandler>();
         text = new StringBuilder();
         this.noteId = noteId;
+        this.isDeleted = false;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
     }
 
     /**
@@ -33,7 +39,12 @@ public class Manager implements Runnable {
      * Send operation from fromClientId to every other client
      */
     public void broadcastOperation(int fromClientId, Replace operation) {
-        operation.apply(text);
+        if (operation.delete) {
+            isDeleted = true;
+        }
+        else {
+            operation.apply(text);
+        }
 
         for (Iterator<ClientHandler> iterator = clientHandlers.iterator(); iterator.hasNext(); ) {
             ClientHandler clientHandler = iterator.next();
@@ -65,6 +76,10 @@ public class Manager implements Runnable {
                 Thread.sleep(20000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+
+            if (isDeleted) { // no need for ACK if deleted
+                break;
             }
 
             synchronized (this) {

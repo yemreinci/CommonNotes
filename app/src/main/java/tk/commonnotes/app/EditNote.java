@@ -1,8 +1,11 @@
 package tk.commonnotes.app;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,6 +14,9 @@ import android.text.Spannable;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
@@ -34,6 +40,7 @@ public class EditNote extends AppCompatActivity {
     private Socket sock;
     private int numExecuted = 0;
     int noteId;
+    private boolean isDeleted = false;
     private HashMap<Character, Character> charToBullet, bulletToChar;
     private EditNoteBackground background = null;
 
@@ -65,6 +72,16 @@ public class EditNote extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        exit();
+    }
+
+    public void exit() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.setEnabled(false);
+            }
+        });
 
         if (background != null) {
             background.stop();
@@ -86,6 +103,16 @@ public class EditNote extends AppCompatActivity {
         });
     }
 
+    void handleDelete() {
+        if (!isDeleted) {
+            isDeleted = true;
+            text.setEnabled(false);
+            findViewById(R.id.scrollView).setVisibility(View.GONE);
+            findViewById(R.id.deletedLayout).setVisibility(View.VISIBLE);
+            background.stop();
+        }
+    }
+
     /**
      * handle message from server
      */
@@ -94,7 +121,11 @@ public class EditNote extends AppCompatActivity {
             @Override
             public void run() {
                 Log.d("receive", "received: " + message.getOperation());
-                Replace transformed = (Replace) message.getOperation();
+
+                if(message.getOperation().delete) {
+                    handleDelete();
+                    return;
+                }
 
                 // discard acknowledged operations
                 while (numAcknowledged < message.getNumExecuted()) {
@@ -102,6 +133,7 @@ public class EditNote extends AppCompatActivity {
                     numAcknowledged++;
                 }
 
+                Replace transformed = (Replace) message.getOperation();
                 // transform concurrent operations
                 for (ListIterator<Replace> iter = operations.listIterator(); iter.hasNext(); ) {
                     Replace op = iter.next();
@@ -130,7 +162,7 @@ public class EditNote extends AppCompatActivity {
                     public void run() {
                         text.getText().removeSpan(span);
                     }
-                }, 500);
+                }, 600);
             }
         });
     }
@@ -186,9 +218,59 @@ public class EditNote extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.edit_note_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_delete) {
+
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which){
+                        case DialogInterface.BUTTON_POSITIVE:
+                            messages.add(new Message(new Replace(true), numExecuted));
+                            break;
+
+                        case DialogInterface.BUTTON_NEGATIVE:
+                            break;
+                    }
+                }
+            };
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Are you sure you want to delete this note?")
+                    .setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener).show();
+
+            return true;
+        }
+        else if (id == android.R.id.home) {
+            exit();
+        }
+
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_note);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
 
         initializeBulletTables();
 

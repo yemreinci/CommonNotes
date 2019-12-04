@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".app.EditNote" />
+        <activity android:name=".app.EditNote"
+                  android:theme="@style/AppTheme.NoActionBar"></activity>
         <activity
             android:name=".app.NotesList"
             android:theme="@style/AppTheme.NoActionBar"></activity>
