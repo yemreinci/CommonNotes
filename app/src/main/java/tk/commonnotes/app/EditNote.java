@@ -35,6 +35,7 @@ public class EditNote extends AppCompatActivity {
     private boolean disableWatcher = false;
     private LinkedList<Replace> operations;
     private int numAcknowledged = 0;
+    private Socket sock;
     private int numExecuted = 0;
     private ArrayList<Replace> outgoing = new ArrayList<Replace>();
     private int noteId;
@@ -58,6 +59,24 @@ public class EditNote extends AppCompatActivity {
         for(HashMap.Entry<Character, Character> entry: charToBullet.entrySet()) {
             bulletToChar.put(entry.getValue(), entry.getKey());
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        try {
+            sock.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        finish();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     @Override
@@ -144,7 +163,7 @@ public class EditNote extends AppCompatActivity {
                 try {
                     Log.d("tcpsocket", "running");
 
-                    Socket sock = new Socket(Config.serverAddress, Config.serverPort);
+                    sock = new Socket(Config.serverAddress, Config.serverPort);
                     Log.d("tcpsocket", "socket opened");
 
                     HashMap<String, Object> request = new HashMap<>();

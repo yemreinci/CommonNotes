@@ -22,6 +22,15 @@ public class Server {
 		System.out.println("I - listening connections on " + port);
 	}
 
+	private void closeSocket(Socket sock) {
+		try {
+			sock.close();
+		} catch (IOException e) {
+			System.out.println("E - cant close socket");
+			e.printStackTrace();
+		}
+	}
+
 	public void handleNewClient(Socket sock) {
 		System.out.println("I - a new client is connected");
 
@@ -34,6 +43,8 @@ public class Server {
 		} catch (IOException e) {
 			System.out.println("E - error when opening streams");
 			e.printStackTrace();
+			System.out.println("I - trying to close the client socket");
+			closeSocket(sock);
 			return;
 		}
 
@@ -103,10 +114,14 @@ public class Server {
 		} catch (IOException e) {
 			System.out.println("E - error when communicating.");
 			e.printStackTrace();
+			System.out.println("I - trying to close the client socket");
+			closeSocket(sock);
 			return;
 		} catch (ClassNotFoundException e) {
 			System.out.println("E - unexpected error happened.");
 			e.printStackTrace();
+			System.out.println("I - trying to close the client socket");
+			closeSocket(sock);
 			return;
 		}
 	}

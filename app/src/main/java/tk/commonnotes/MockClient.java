@@ -43,12 +43,16 @@ public class MockClient {
 //        Socket sock = new Socket("52.174.25.75", 8001);
 //        final int noteId = newNote();
         final int noteId = 0;
-        Socket sock = new Socket("localhost", 8080);
+//        Socket sock = new Socket("localhost", 8080);
+        Socket sock = new Socket("52.174.25.75", 9000);
+        System.out.println("socket created");
 
         final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
         final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
         final ArrayList<Replace> operations = new ArrayList<Replace>();
         final Random r = new Random(1337);
+
+        System.out.println("streams open");
 
         final Runnable receiver = new Runnable() {
             @Override

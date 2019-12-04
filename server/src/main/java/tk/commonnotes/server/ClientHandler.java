@@ -80,9 +80,25 @@ public class ClientHandler implements Runnable {
 
             }
         } catch (ClassNotFoundException | IOException | NullPointerException e) {
+            System.out.println("E - error in client handler loop.");
             e.printStackTrace();
-            dead = true;
-            System.out.println("E - client " + id + " is dead.");
+            die();
+        }
+    }
+
+    private void die() {
+        if (!isDead()) {
+            System.out.println("I - client " + id + " is dying.");
+            try {
+                objectInputStream.close();
+                objectOutputStream.close();
+            } catch (IOException e) {
+                System.out.println("E - error when closing streams");
+                e.printStackTrace();
+            } finally {
+                dead = true;
+                System.out.println("I - client " + id + " is dead");
+            }
         }
     }
 
@@ -95,8 +111,7 @@ public class ClientHandler implements Runnable {
                 objectOutputStream.writeObject(msg);
             } catch (IOException e) {
                 e.printStackTrace();
-                dead = true;
-                System.out.println("E - client " + id + " is dead.");
+                die();
             }
         }
     }

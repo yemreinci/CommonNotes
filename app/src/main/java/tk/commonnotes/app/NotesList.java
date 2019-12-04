@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -47,7 +48,6 @@ public class NotesList extends AppCompatActivity {
 
         if (id == R.id.action_refresh) {
             loadNotes();
-            Toast.makeText(NotesList.this, "refreshed", Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -55,8 +55,10 @@ public class NotesList extends AppCompatActivity {
             Thread job = new Thread() {
                 @Override
                 public void run() {
+                    Socket sock = null;
+
                     try {
-                        Socket sock = new Socket(Config.serverAddress, Config.serverPort);
+                        sock = new Socket(Config.serverAddress, Config.serverPort);
 
                         final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
                         final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
@@ -70,11 +72,10 @@ public class NotesList extends AppCompatActivity {
 
                         HashMap<String, Object> response = (HashMap<String, Object>) in.readObject();
 
-                        final int noteId = (int) response.get("noteId");
-
                         in.close();
                         out.close();
-                        sock.close();
+
+                        final int noteId = (int) response.get("noteId");
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -86,6 +87,23 @@ public class NotesList extends AppCompatActivity {
                         });
                     } catch (IOException | ClassNotFoundException e) {
                         e.printStackTrace();
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getApplicationContext(),
+                                        "check your connection!",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    } finally {
+                        if (sock != null) {
+                            try {
+                                sock.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
             };
@@ -97,13 +115,17 @@ public class NotesList extends AppCompatActivity {
     }
 
     private void loadNotes() {
+        layout.removeAllViews();
+        // TODO add a spinner for better ui
+
         Thread job = new Thread() {
             List<HashMap<String, Object>> notes = null;
 
             @Override
             public void run() {
+                Socket sock = null;
                 try {
-                    Socket sock = new Socket(Config.serverAddress, Config.serverPort);
+                    sock = new Socket(Config.serverAddress, Config.serverPort);
 
                     final ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
                     final ObjectInputStream in = new ObjectInputStream(sock.getInputStream());
@@ -116,15 +138,36 @@ public class NotesList extends AppCompatActivity {
                     out.flush();
 
                     notes = (List) in.readObject();
+
+                    in.close();
+                    out.close();
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(
+                                    getApplicationContext(),
+                                    "loading notes failed!",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    return;
+                } finally {
+                    if (sock != null) {
+                        try {
+                            sock.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        layout.removeAllViews();
-
                         for (HashMap<String, Object> note: notes) {
                             View v = LayoutInflater.from(NotesList.this).inflate(R.layout.note_card, layout, false);
 
@@ -135,7 +178,6 @@ public class NotesList extends AppCompatActivity {
                                 @Override
                                 public void onClick(View v) {
                                     Intent intent = new Intent(NotesList.this, EditNote.class);
-                                    // TODO put which note is selected
                                     intent.putExtra("noteId", noteId);
                                     startActivity(intent);
                                 }
