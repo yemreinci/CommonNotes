@@ -96,6 +96,8 @@ public class ClientHandler implements Runnable {
                         }
 
                         numExecuted++;
+
+                        operation = receivedOp;
                     }
 
                     // Send operation to every client
