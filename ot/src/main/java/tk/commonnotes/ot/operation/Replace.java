@@ -1,6 +1,5 @@
 package tk.commonnotes.ot.operation;
 
-import java.io.Serializable;
 import java.util.Locale;
 
 

@@ -69,7 +69,7 @@ public class ReplaceTests {
             ei2 = bi2 + rand.nextInt(len+1-bi2);
 
             String[] choices = {
-                    "", "a", "b", "c", "d"
+                    "", "a", "b", "c", "d", "ab", "ac", "abc", "def"
             };
 
             Replace r1 = new Replace(bi1, ei1, choices[rand.nextInt(choices.length)]);

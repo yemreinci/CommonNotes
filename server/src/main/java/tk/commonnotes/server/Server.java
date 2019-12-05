@@ -52,7 +52,6 @@ public class Server {
 		// newNote: client creates a new note
 		// connectNote: client subscribes to an existing note
 		// listNotes: client gets a list of existing notes
-
 		try {
 			HashMap<String, Object> request = (HashMap<String, Object>) in.readObject();
 
