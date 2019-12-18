@@ -107,7 +107,7 @@ public class Server {
 					note.put("noteId", noteId);
 					note.put("text", manager.getText().toString());
 
-					notes.add(note);
+					notes.addFirst(note);
 				}
 
 				out.writeObject(notes);
@@ -146,7 +146,16 @@ public class Server {
 			}
 
 			if (clientSock != null) {
-				handleNewClient(clientSock);
+				final Socket finalSock = clientSock;
+
+				Thread clientThread = new Thread() {
+					@Override
+					public void run() {
+						Server.this.handleNewClient(finalSock);
+					}
+				};
+
+				clientThread.start();
 			}
 		}
 	}
